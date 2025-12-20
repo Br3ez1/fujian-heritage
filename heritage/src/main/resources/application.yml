@@ -1,0 +1,29 @@
+server:
+  port: 8080 # 后端启动端口
+  # 修复报红：新版本 Spring Boot 字符集配置位置变更
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: fujian-heritage-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 这里的 url 对应你刚才创建的数据库名 fujian_heritage
+    url: jdbc:mysql://localhost:3306/fujian_heritage?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root # 【重要】请修改为你本地 MySQL 的密码
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    # 开启驼峰命名转换 (数据库 user_id -> Java userId)
+    map-underscore-to-camel-case: true
+    # 打印 SQL 日志，方便调试（看到真实的 SQL 语句）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto # 主键自增策略
