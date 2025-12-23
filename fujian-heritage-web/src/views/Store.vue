@@ -58,7 +58,15 @@
                     <div class="origin-tag">{{ product.category }}</div>
                     <div class="price">¥{{ product.price }}</div>
                   </div>
-                  <el-button type="primary" color="#A40000" circle size="small" icon="Plus" @click="addToCart(product)"></el-button>
+                  <div class="meta-right">
+                    <!-- AI 导购按钮 -->
+                    <el-tooltip content="AI 导购解说" placement="top">
+                      <el-button class="ai-btn" type="warning" plain circle size="small" @click="handleAiSales(product)">
+                        <el-icon><Microphone /></el-icon>
+                      </el-button>
+                    </el-tooltip>
+                    <el-button type="primary" color="#A40000" circle size="small" icon="Plus" @click="addToCart(product)"></el-button>
+                  </div>
                 </div>
               </div>
             </el-card>
@@ -97,20 +105,48 @@
       </div>
     </el-drawer>
 
-    <!-- 个人中心抽屉 -->
+    <!-- 结算弹窗 -->
+    <el-dialog v-model="checkoutVisible" title="确认订单信息" width="500px">
+      <el-form :model="orderForm" label-width="80px">
+        <el-form-item label="收货人">
+          <el-input v-model="orderForm.receiverName" placeholder="请输入收货人姓名" />
+        </el-form-item>
+        <el-form-item label="联系电话">
+          <el-input v-model="orderForm.contact" placeholder="请输入手机号码" />
+        </el-form-item>
+        <el-form-item label="收货地址">
+          <el-input v-model="orderForm.address" type="textarea" :rows="2" placeholder="请输入详细地址" />
+        </el-form-item>
+        <el-divider />
+        <div style="display: flex; justify-content: space-between; font-weight: bold;">
+          <span>支付金额：</span>
+          <span style="color: #A40000; font-size: 18px;">¥{{ cartTotal }}</span>
+        </div>
+      </el-form>
+      <template #footer>
+        <el-button @click="checkoutVisible = false">取消</el-button>
+        <el-button type="primary" color="#A40000" @click="submitOrder" :loading="checkoutLoading">
+          确认支付
+        </el-button>
+      </template>
+    </el-dialog>
+
     <UserDrawer v-model="userDrawer" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
 import request from '../api/request'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '../store/user'
+import { useChatStore } from '../store/chat'
 import { useRouter } from 'vue-router'
 import UserDrawer from '../components/UserDrawer.vue'
+import { Microphone } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
+const chatStore = useChatStore()
 const router = useRouter()
 
 const filterCategory = ref('全部')
@@ -120,9 +156,16 @@ const cart = ref([])
 const loading = ref(false)
 const checkoutLoading = ref(false)
 const productList = ref([])
+const checkoutVisible = ref(false)
+const orderForm = reactive({
+  receiverName: '',
+  contact: '',
+  address: ''
+})
 
 const isLogin = computed(() => !!userStore.userInfo)
 
+// Mock Data
 const mockProducts = [
   { productId: 1, name: "福州脱胎漆器·金缮手工碗", category: "漆艺", price: 1280, stock: 5, tag: '典藏' },
   { productId: 2, name: "德化白瓷·大师手作羊脂玉茶具", category: "陶瓷", price: 299, stock: 100, tag: '热销' },
@@ -179,61 +222,66 @@ const removeFromCart = (index) => {
   cart.value.splice(index, 1)
 }
 
-// ★★★ 核心修改：真实下单 ★★★
+// 核心修改：点击导购时，设置为 'sales' 模式
+const handleAiSales = (product) => {
+  const query = `您好，我对这款“${product.name}”很感兴趣。作为金牌销售，能为我详细介绍一下它的特色、非遗文化背景以及为什么值得购买吗？`
+  // 传入 'sales' 标识，告诉后端用销售人设
+  chatStore.openWithQuery(query, 'sales')
+}
+
 const handleCheckout = () => {
   if (!isLogin.value) {
     ElMessage.warning('请先登录后再结算')
     setTimeout(() => router.push('/login'), 1000)
     return
   }
+  orderForm.receiverName = userStore.userInfo.nickname || userStore.userInfo.username
+  checkoutVisible.value = true
+}
 
-  ElMessageBox.prompt('请输入收货地址', '订单确认', {
-    confirmButtonText: '支付并下单',
-    cancelButtonText: '取消',
-    inputPattern: /.+/,
-    inputErrorMessage: '地址不能为空'
-  }).then(async ({ value: address }) => {
+const submitOrder = async () => {
+  if (!orderForm.receiverName || !orderForm.contact || !orderForm.address) {
+    return ElMessage.warning('请将收货信息填写完整')
+  }
+  checkoutLoading.value = true
+  const summary = cart.value.map(p => p.name).join(', ')
+  const orderData = {
+    userId: userStore.userInfo.userId,
+    totalAmount: cartTotal.value,
+    receiverName: orderForm.receiverName,
+    address: orderForm.address,
+    contact: orderForm.contact,
+    productSummary: summary.length > 200 ? summary.substring(0, 197) + "..." : summary
+  }
 
-    checkoutLoading.value = true
-
-    // 1. 拼接商品摘要
-    const summary = cart.value.map(p => p.name).join(', ')
-
-    // 2. 构造订单对象
-    const orderData = {
-      userId: userStore.userInfo.userId,
-      totalAmount: cartTotal.value,
-      receiverName: userStore.userInfo.nickname || userStore.userInfo.username, // 默认收货人
-      address: address,
-      contact: "13800000000", // 默认手机号，实际应从用户表查
-      productSummary: summary.length > 200 ? summary.substring(0, 197) + "..." : summary
+  try {
+    const res = await request.post('/order/create', orderData)
+    if (res.code === 200) {
+      ElMessage.success('支付成功！已生成订单')
+      cart.value = []
+      drawer.value = false
+      checkoutVisible.value = false
+    } else {
+      ElMessage.error(res.msg || '下单失败')
     }
-
-    try {
-      const res = await request.post('/order/create', orderData)
-      if (res.code === 200) {
-        ElMessage.success('支付成功！已生成订单')
-        cart.value = []
-        drawer.value = false
-      } else {
-        ElMessage.error(res.msg || '下单失败')
-      }
-    } catch (e) {
-      ElMessage.error('网络错误，下单失败')
-    } finally {
-      checkoutLoading.value = false
-    }
-
-  }).catch(() => {})
+  } catch (e) {
+    ElMessage.error('网络错误，下单失败')
+  } finally {
+    checkoutLoading.value = false
+  }
 }
 
 onMounted(() => {
   fetchProducts()
 })
+
+// 离开页面时，重置为通用模式，防止影响其他页面的 AI
+onUnmounted(() => {
+  chatStore.setChatType('general')
+})
 </script>
 
 <style scoped>
-/* 样式保持不变，省略以节省空间，请复制之前的样式 */
 .store-wrapper { background: #fdfdfd; min-height: 100vh; }
 .serif-font { font-family: "SimSun", serif; font-weight: bold; }
 
@@ -291,8 +339,13 @@ onMounted(() => {
 .product-info { padding: 15px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
 .product-title { margin: 0 0 10px; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
 .product-meta { display: flex; justify-content: space-between; align-items: flex-end; }
+.meta-left { display: flex; flex-direction: column; }
+.meta-right { display: flex; gap: 8px; }
 .origin-tag { font-size: 12px; color: #999; margin-bottom: 4px; }
 .price { color: #A40000; font-size: 18px; font-weight: bold; font-family: Arial; }
+
+.ai-btn { border-color: #E6A23C; color: #E6A23C; }
+.ai-btn:hover { background-color: #E6A23C; color: #fff; border-color: #E6A23C; }
 
 .empty-cart { text-align: center; margin-top: 100px; color: #999; }
 .cart-item { display: flex; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; align-items: center; }

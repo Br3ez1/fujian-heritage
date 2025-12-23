@@ -20,7 +20,7 @@ public class HeritageServiceImpl extends ServiceImpl<HeritageMapper, Heritage> i
     private HeritageMapper heritageMapper;
 
     @Override
-    public List<Heritage> search(String name, String category) {
+    public List<Heritage> search(String name, String category,String region) {
         QueryWrapper<Heritage> wrapper = new QueryWrapper<>();
         wrapper.eq("status", 1); // 前台只看已发布
         if (StringUtils.hasText(name)) {
@@ -28,6 +28,10 @@ public class HeritageServiceImpl extends ServiceImpl<HeritageMapper, Heritage> i
         }
         if (StringUtils.hasText(category) && !"全部".equals(category)) {
             wrapper.eq("category", category);
+        }
+        // 新增：地区筛选
+        if (StringUtils.hasText(region)) {
+            wrapper.like("region", region);
         }
         return baseMapper.selectList(wrapper);
     }

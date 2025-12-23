@@ -21,8 +21,9 @@ public class HeritageController {
     // 前台列表
     @GetMapping("/list")
     public Result<List<Heritage>> list(@RequestParam(required = false) String name,
-                                       @RequestParam(required = false) String category) {
-        return Result.success(heritageService.search(name, category));
+                                       @RequestParam(required = false) String category,
+                                       @RequestParam(required = false) String region) {
+        return Result.success(heritageService.search(name, category, region));
     }
 
     // 后台管理列表

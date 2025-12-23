@@ -20,10 +20,16 @@ public class Result<T> {
         return r;
     }
 
+    // 2. 【新增】无参数的 success 方法
+    public static <T> Result<T> success() {
+        return success(null);
+    }
+
     public static <T> Result<T> error(String msg) {
         Result<T> r = new Result<>();
         r.code = 500;
         r.msg = msg;
         return r;
     }
+
 }

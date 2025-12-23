@@ -1,8 +1,10 @@
+{
+type: uploaded file
+fileName: src/views/Home.vue
+fullContent:
 <template>
   <div class="home-wrapper">
-    <!-- 第一屏：全屏轮播 (Page 1) -->
     <div class="section-hero">
-      <!-- 显式设置高度，确保铺满屏幕减去导航栏 -->
       <el-carousel height="calc(100vh - 80px)" :interval="5000" arrow="always">
         <el-carousel-item v-for="(item, index) in banners" :key="index">
           <div class="banner-item" :style="{ backgroundImage: `url(${item.img})` }">
@@ -19,14 +21,12 @@
         </el-carousel-item>
       </el-carousel>
 
-      <!-- 下滑提示 -->
       <div class="scroll-hint" @click="scrollToContent">
         <span>向下滑动</span>
         <el-icon class="bounce"><ArrowDown /></el-icon>
       </div>
     </div>
 
-    <!-- 第二屏：资讯动态 (Page 2) -->
     <div class="section-content" id="news-section">
       <div class="container">
         <div class="section-header">
@@ -65,7 +65,6 @@
       </div>
     </div>
 
-    <!-- 第三屏：精选瑰宝 (Page 3) -->
     <div class="section-content bg-gray">
       <div class="container">
         <div class="section-header">
@@ -76,7 +75,6 @@
         <el-row :gutter="20">
           <el-col :xs="24" :sm="8" v-for="(item, i) in featuredItems" :key="i" class="mb-20">
             <div class="feature-card" @click="$router.push('/directory')">
-              <!-- 修改这里：合并背景图和颜色 -->
               <div class="card-bg" :style="{
             backgroundImage: `url(${item.img})`,
             backgroundColor: item.color
@@ -95,7 +93,6 @@
     </div>
 
 
-    <!-- 第四屏：地域探索 (Page 4) -->
     <div class="section-content">
       <div class="container">
         <div class="section-header">
@@ -107,7 +104,6 @@
           <div class="map-visual">
             <img src="../assets/images/map.jpg" class="map-base" alt="Fujian Map" />
 
-            <!-- 简单的地图点位 -->
             <div
                 v-for="city in cities"
                 :key="city.name"
@@ -119,13 +115,17 @@
               <span class="dot-label">{{ city.name }}</span>
             </div>
 
-            <div class="map-tip">点击节点探索地域文化</div>
+            <div class="map-tip">点击节点切换，点击右侧地名探索详情</div>
           </div>
 
           <div class="map-info">
             <transition name="fade" mode="out-in">
               <div :key="activeCity" class="city-detail">
-                <h1 class="serif-font city-name">{{ activeCityData.name }}</h1>
+                <h1 class="serif-font city-name" @click="handleCityJump" title="点击探索该地区非遗项目">
+                  {{ activeCityData.name }}
+                  <el-icon class="jump-icon"><Right /></el-icon>
+                </h1>
+
                 <p class="city-desc">{{ activeCityData.desc }}</p>
                 <div class="city-tags">
                   <el-tag
@@ -150,49 +150,38 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-
-
-
+// 确保引入 Right 图标
+import { ArrowDown, Right } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 // ==========================================
 // 轮播图配置
-// 采用背景图模式 (background-image)，兼容性更好，不易黑屏
 // ==========================================
 const banners = [
   {
     title: "福建非遗 · 智享未来",
     desc: "数字化赋能传统文化，让传承触手可及",
-    // 网络图：故宫红墙
     img: new URL('../assets/images/banner1.jpg',import.meta.url).href
-    // 本地图切换方法：
-    // 1. 把下面的注释解开
-    // 2. 确保文件存在于 public/images/ 或者 src/assets/
-    // img: new URL('../assets/banner1.jpg', import.meta.url).href
   },
   {
     title: "中国白 · 德化瓷",
     desc: "世界陶瓷之都的艺术瑰宝",
-    // 网络图：白瓷
     img: new URL('../assets/images/banner2.jpg',import.meta.url).href
   },
   {
     title: "茶韵 · 铁观音",
     desc: "传统制作技艺，百年的茶香",
-    // 网络图：茶园
     img: new URL('../assets/images/banner3.jpg',import.meta.url).href
   },
   {
     title: "土楼 · 东方古堡",
     desc: "独一无二的神话般山区建筑",
-    // 网络图：土楼
     img: new URL('../assets/images/banner4.jpg',import.meta.url).href
   },
   {
     title: "妈祖 · 海上女神",
     desc: "中国首个信俗类世界遗产，护佑四海平安",
-    // 网络图：民俗
     img: new URL('../assets/images/banner5.jpg',import.meta.url).href
   }
 ]
@@ -210,21 +199,18 @@ const featuredItems = [
     title: "福州脱胎漆器",
     region: "福州",
     desc: "质地轻巧坚固，色泽鲜艳古朴，与北京景泰蓝、江西景德镇瓷器并称中国工艺三宝。",
-    // 修改为图片变量
     img: new URL('../assets/images/feature1.jpg',import.meta.url).href
   },
   {
     title: "惠安石雕",
     region: "泉州",
     desc: "源于中原，流传于福建惠安，具有强烈的民族性和浓郁的宗教色彩。",
-    // 修改为图片变量
     img: new URL('../assets/images/feature2.jpg',import.meta.url).href
   },
   {
     title: "妈祖信俗",
     region: "莆田",
     desc: "中国首个信俗类世界遗产，以崇奉和颂扬妈祖立德、行善、大爱精神为核心。",
-    // 修改为图片变量
     img: new URL('../assets/images/feature3.jpg',import.meta.url).href
   }
 ];
@@ -253,6 +239,11 @@ const cityDataMap = {
 }
 const activeCityData = computed(() => cityDataMap[activeCity.value])
 
+// 新增：点击城市大字跳转
+const handleCityJump = () => {
+  router.push({ path: '/directory', query: { region: activeCity.value } })
+}
+
 const scrollToContent = () => {
   document.getElementById('news-section').scrollIntoView({ behavior: 'smooth' })
 }
@@ -273,7 +264,6 @@ const scrollToContent = () => {
   display: flex; align-items: center; justify-content: center;
   position: relative;
 }
-/* 遮罩层，写在伪元素里更干净 */
 .banner-item::before {
   content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.35);
@@ -300,7 +290,6 @@ const scrollToContent = () => {
 .scroll-hint span { font-size: 12px; margin-bottom: 5px; opacity: 0.8; }
 .bounce { animation: bounce 2s infinite; font-size: 20px; }
 @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
-
 
 /* 通用内容区块 */
 .section-content { padding: 80px 0; background: #fff; }
@@ -335,23 +324,18 @@ const scrollToContent = () => {
 .mb-20 { margin-bottom: 20px; }
 .feature-card { background: #fff; border: 1px solid #eee; transition: all 0.3s; cursor: pointer; height: 100%; }
 .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #A40000; }
-/* 更新 card-bg 样式 */
 .card-bg {
   height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  /* 新增以下三行 */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
-  /* 添加遮罩层确保文字可读 */
   background-color: rgba(0, 0, 0, 0.3);
   background-blend-mode: multiply;
 }
-
 .region-badge { border: 1px solid rgba(255,255,255,0.6); color: #fff; padding: 4px 12px; font-size: 14px; }
 .card-text { padding: 25px; text-align: center; }
 .card-text h3 { margin: 0 0 15px; color: #333; }
@@ -371,7 +355,30 @@ const scrollToContent = () => {
 .map-tip { position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 5px 10px; font-size: 12px; color: #999; border-radius: 4px; }
 
 .map-info { width: 50%; padding: 60px; display: flex; flex-direction: column; justify-content: center; background: #fdfdfd; }
-.city-name { font-size: 48px; color: #A40000; margin: 0 0 20px; }
+
+/* 城市大字样式修改 */
+.city-name {
+  font-size: 48px;
+  color: #A40000;
+  margin: 0 0 20px;
+  cursor: pointer; /* 鼠标手势 */
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+.city-name:hover {
+  transform: translateX(5px); /* 悬停右移特效 */
+  text-shadow: 2px 2px 4px rgba(164, 0, 0, 0.1);
+}
+.jump-icon {
+  font-size: 24px;
+  margin-left: 10px;
+  opacity: 0.6;
+}
+.city-name:hover .jump-icon {
+  opacity: 1;
+}
+
 .city-desc { font-size: 16px; color: #555; line-height: 1.8; margin-bottom: 30px; }
 .city-tags { display: flex; flex-wrap: wrap; }
 
@@ -379,17 +386,11 @@ const scrollToContent = () => {
 @media (max-width: 768px) {
   .news-list { padding: 0; margin-top: 20px; }
   .map-wrapper { flex-direction: column; height: auto; }
-  .map-visual {
-    width: 50%;
-    position: relative;
-    background: #fff;
-    border-right: 1px solid #eee;
-    overflow: hidden; /* 确保图片超出部分被裁剪 */
-    height: 350px;
-  }
+  .map-visual { width: 50%; height: 350px; }
   .map-info { width: 100%; padding: 30px; }
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
+}

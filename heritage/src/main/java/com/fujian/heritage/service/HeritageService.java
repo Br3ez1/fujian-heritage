@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface HeritageService extends IService<Heritage> {
     // 前台搜索 (只查已发布)
-    List<Heritage> search(String name, String category);
+    List<Heritage> search(String name, String category,String region);
 
     // 后台列表 (查所有，支持筛选)
     List<Heritage> getAdminList(String name, String category, Integer status);
@@ -17,4 +17,5 @@ public interface HeritageService extends IService<Heritage> {
 
     // 仪表盘数据
     Map<String, Object> getDashboardData();
+
 }
