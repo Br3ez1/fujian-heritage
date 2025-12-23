@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import Home from '../views/Home.vue'
+import { useUserStore } from '../store/user'
 // 路由配置
 const routes = [
     {
@@ -37,6 +38,12 @@ const routes = [
         path: '/admin',
         name: 'Admin',
         component: () => import('../views/Admin.vue')
+    },
+    {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('../views/Profile.vue'),
+        meta: { requiresAuth: true }
     }
 ]
 
@@ -44,5 +51,12 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 })
-
+router.beforeEach((to, from, next) => {
+    const userStore = useUserStore()
+    if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+        next('/login')
+    } else {
+        next()
+    }
+})
 export default router

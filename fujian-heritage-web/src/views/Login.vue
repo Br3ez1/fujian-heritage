@@ -15,7 +15,7 @@
               <el-input
                   v-model="loginForm.username"
                   placeholder="请输入用户名"
-                  prefix-icon="User"
+                  :prefix-icon="User"
                   size="large"
               />
             </el-form-item>
@@ -24,7 +24,7 @@
                   v-model="loginForm.password"
                   type="password"
                   placeholder="请输入密码"
-                  prefix-icon="Lock"
+                  :prefix-icon="Lock"
                   size="large"
                   show-password
                   @keyup.enter="handleLogin"
@@ -43,7 +43,7 @@
               <el-input
                   v-model="regForm.username"
                   placeholder="设置用户名 (英文/数字)"
-                  prefix-icon="User"
+                  :prefix-icon="User"
                   size="large"
               />
             </el-form-item>
@@ -51,7 +51,7 @@
               <el-input
                   v-model="regForm.nickname"
                   placeholder="您的昵称 (如: 柳同学)"
-                  prefix-icon="Postcard"
+                  :prefix-icon="Postcard"
                   size="large"
               />
             </el-form-item>
@@ -60,7 +60,7 @@
                   v-model="regForm.password"
                   type="password"
                   placeholder="设置密码"
-                  prefix-icon="Lock"
+                  :prefix-icon="Lock"
                   size="large"
                   show-password
               />
@@ -81,6 +81,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import request from '../api/request'
 import { ElMessage } from 'element-plus'
+import { User, Lock, Postcard } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -88,7 +89,7 @@ const userStore = useUserStore()
 const activeTab = ref('login')
 const loading = ref(false)
 
-// 表单数据
+// 表单数据使用 ref 保持响应性
 const loginForm = ref({ username: '', password: '' })
 const regForm = ref({ username: '', password: '', nickname: '' })
 
@@ -100,7 +101,6 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    // 调用后端接口 /auth/login
     const res = await request.post('/auth/login', loginForm.value)
 
     if (res.code === 200) {
@@ -129,10 +129,10 @@ const handleRegister = async () => {
 
   loading.value = true
   try {
-    // 调用后端接口 /auth/register
     const res = await request.post('/auth/register', regForm.value)
 
     if (res.code === 200) {
+      // 注册成功后直接使用返回的用户信息登录
       userStore.login(res.data)
       ElMessage.success('注册成功！已自动登录')
       router.push('/')
@@ -140,6 +140,7 @@ const handleRegister = async () => {
       ElMessage.error(res.msg || '注册失败')
     }
   } catch (error) {
+    console.error(error)
     ElMessage.error('注册失败，可能是用户名已存在')
   } finally {
     loading.value = false
@@ -154,13 +155,12 @@ const handleRegister = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* 背景图：使用一张有文化韵味的图 */
   background: url('https://www.ihchina.cn/Uploads/Picture/2018/11/02/s5bdbf7f63f5d.jpg') no-repeat center center;
   background-size: cover;
   position: relative;
+  overflow: hidden;
 }
 
-/* 加一层遮罩让文字更清晰 */
 .login-wrapper::before {
   content: "";
   position: absolute;
@@ -208,8 +208,7 @@ const handleRegister = async () => {
 .form-content { margin-top: 20px; }
 .submit-btn { width: 100%; height: 45px; font-size: 16px; margin-top: 10px; border-radius: 4px; }
 
-/* 覆盖 Element Tabs 样式 */
-:deep(.el-tabs__item) { font-size: 16px; }
+:deep(.el-tabs__item) { font-size: 16px; font-family: "SimSun", serif; font-weight: bold; }
 :deep(.el-tabs__item.is-active) { color: #A40000; }
 :deep(.el-tabs__active-bar) { background-color: #A40000; }
 </style>

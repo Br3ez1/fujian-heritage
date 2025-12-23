@@ -3,46 +3,47 @@
     <el-drawer v-model="visible" title="个人中心" direction="rtl" size="360px" :before-close="handleClose">
       <!-- 头部信息 -->
       <div class="user-drawer-header">
-        <el-avatar :size="90" style="background: #A40000; font-size: 36px; margin-bottom: 10px;">
+        <el-avatar :size="90" style="background: #A40000; font-size: 36px; margin-bottom: 10px;" :src="userStore.userInfo?.avatar">
           {{ userStore.userInfo?.nickname?.charAt(0) || '友' }}
         </el-avatar>
-        <h3>{{ userStore.userInfo?.nickname || '非遗之友' }}</h3>
-        <el-tag v-if="userStore.isAdmin()" type="danger" effect="dark" size="small">管理员</el-tag>
+        <h3 class="serif-font">{{ userStore.userInfo?.nickname || '非遗之友' }}</h3>
+        <!-- 使用 userStore.isAdmin() 方法判断 -->
+        <el-tag v-if="userStore.isAdmin && userStore.isAdmin()" type="danger" effect="dark" size="small">管理员</el-tag>
         <el-tag v-else type="success" size="small">社区成员</el-tag>
       </div>
 
       <!-- 菜单列表 -->
       <div class="user-menu">
         <!-- 管理员入口 -->
-        <div v-if="userStore.isAdmin()" class="menu-item admin-entry" @click="handleAdmin">
+        <div v-if="userStore.isAdmin && userStore.isAdmin()" class="menu-item admin-entry" @click="handleAdmin">
           <el-icon><Monitor /></el-icon>
-          <span>进入管理后台</span>
+          <span class="serif-font">进入管理后台</span>
           <el-icon class="arrow"><ArrowRight /></el-icon>
         </div>
 
         <!-- 业务菜单 -->
         <div class="menu-item" @click="openOrderList">
-          <el-icon><Goods /></el-icon><span>我的订单</span>
+          <el-icon><Goods /></el-icon><span class="serif-font">我的订单</span>
           <el-icon class="arrow"><ArrowRight /></el-icon>
         </div>
         <div class="menu-item" @click="openSignupList">
-          <el-icon><School /></el-icon><span>研学报名记录</span>
+          <el-icon><School /></el-icon><span class="serif-font">研学报名记录</span>
           <el-icon class="arrow"><ArrowRight /></el-icon>
         </div>
         <div class="menu-item" @click="openMyPosts">
-          <el-icon><List /></el-icon><span>我的帖子</span>
+          <el-icon><List /></el-icon><span class="serif-font">我的帖子</span>
           <el-icon class="arrow"><ArrowRight /></el-icon>
         </div>
 
         <!-- 账号设置 -->
         <div class="menu-item" @click="openSettings">
-          <el-icon><Setting /></el-icon><span>账号设置</span>
+          <el-icon><Setting /></el-icon><span class="serif-font">账号设置</span>
           <el-icon class="arrow"><ArrowRight /></el-icon>
         </div>
       </div>
 
       <div class="user-drawer-footer">
-        <el-button type="danger" plain style="width: 100%;" @click="handleLogout">退出登录</el-button>
+        <el-button type="danger" plain style="width: 100%;" @click="handleLogout" class="serif-font">退出登录</el-button>
       </div>
     </el-drawer>
 
@@ -82,7 +83,7 @@
         <el-table-column prop="createTime" label="报名时间" width="160">
           <template #default="{row}">{{ formatTime(row.createTime) }}</template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" label="状态" width="100" align="center">
           <template #default="{row}">
             <el-tag v-if="row.status === 1" type="success">报名成功</el-tag>
             <el-tag v-else type="warning">审核中</el-tag>
@@ -136,6 +137,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import request from '../api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Monitor, ArrowRight, Goods, School, List, Setting } from '@element-plus/icons-vue'
 
 const props = defineProps(['modelValue'])
 const emit = defineEmits(['update:modelValue'])
@@ -189,9 +191,7 @@ const handleLogout = () => {
 const openOrderList = async () => {
   dialogs.orders = true
   loading.value = true
-
-  const userId = userStore.userInfo.userId
-
+  const userId = userStore.userInfo?.userId
   try {
     const res = await request.get('/order/my', { params: { userId } })
     if (res.code === 200) {
@@ -215,7 +215,7 @@ const openSignupList = async () => {
   loading.value = true
   try {
     const res = await request.get('/community/signup/my', {
-      params: { userId: userStore.userInfo.userId }
+      params: { userId: userStore.userInfo?.userId }
     })
     if (res.code === 200) {
       dataList.signups = res.data
@@ -238,9 +238,9 @@ const openMyPosts = async () => {
   try {
     const res = await request.get('/community/posts')
     if (res.code === 200) {
-      const myId = userStore.userInfo.userId
+      const myId = userStore.userInfo?.userId
       dataList.posts = res.data.filter(p => {
-        return p.userId === myId || p.author === userStore.userInfo.nickname
+        return p.userId === myId || p.author === userStore.userInfo?.nickname
       })
     } else {
       ElMessage.warning(res.msg || '获取帖子失败')
@@ -301,8 +301,9 @@ const formatTime = (t) => t ? t.replace('T',' ').substring(0,16) : ''
 </script>
 
 <style scoped>
+.serif-font { font-family: "SimSun", serif; font-weight: bold; }
 .user-drawer-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-.user-drawer-header h3 { margin: 10px 0 5px; color: #333; font-family: "SimSun", serif; }
+.user-drawer-header h3 { margin: 10px 0 5px; color: #333; }
 .user-menu { margin-top: 20px; }
 .menu-item {
   display: flex; align-items: center; padding: 12px 10px;

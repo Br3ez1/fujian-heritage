@@ -1,15 +1,11 @@
 <template>
   <header class="header">
     <div class="nav-content">
-      <div class="logo serif-font">
+      <div class="logo serif-font" @click="router.push('/')" style="cursor: pointer;">
         <div class="logo-icon">闽</div>
         <span>八闽遗韵</span>
       </div>
-      <!--
-        导航菜单
-        :router="true" 开启路由模式，index 即为 path
-        @select="handleSelect" 增加手动跳转作为双重保险
-      -->
+
       <el-menu
           :default-active="activeIndex"
           mode="horizontal"
@@ -20,24 +16,56 @@
       >
         <el-menu-item index="/">首页</el-menu-item>
         <el-menu-item index="/directory">非遗名录</el-menu-item>
-        <el-menu-item index="/store">文创商城</el-menu-item>
         <el-menu-item index="/resources">数字资源</el-menu-item>
+        <el-menu-item index="/store">文创商城</el-menu-item>
         <el-menu-item index="/community">传承社区</el-menu-item>
       </el-menu>
+
+      <!-- 用户入口区域 -->
+      <div class="user-entry">
+        <template v-if="userStore.isLoggedIn">
+          <!-- 已登录状态：同步你提供的 UserDrawer 逻辑 -->
+          <div class="user-info-btn" @click="drawerVisible = true">
+            <el-avatar
+                :size="32"
+                :src="userStore.userInfo?.avatar"
+                style="background: #A40000; color: #fff;"
+            >
+              <!-- 若无头像图片，显示昵称首字母，与抽屉保持一致 -->
+              {{ userStore.userInfo?.nickname?.charAt(0) || '友' }}
+            </el-avatar>
+            <!-- 优先显示 nickname -->
+            <span class="username serif-font">
+              {{ userStore.userInfo?.nickname || userStore.userInfo?.username }}
+            </span>
+          </div>
+        </template>
+        <template v-else>
+          <!-- 未登录状态 -->
+          <el-button class="login-btn serif-font" @click="router.push('/login')">登录</el-button>
+        </template>
+      </div>
     </div>
+
+    <!-- 引用用户抽屉组件 -->
+    <UserDrawer v-model="drawerVisible" />
   </header>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '../store/user'
+import UserDrawer from './UserDrawer.vue'
 
 const route = useRoute()
 const router = useRouter()
-const activeIndex = ref('/')
+const userStore = useUserStore()
 
-// 监听路由变化，高亮当前菜单
-// 移除 try-catch，直接监听
+const activeIndex = ref('/')
+const drawerVisible = ref(false)
+
+// 监听路由变化，同步高亮状态
 watch(
     () => route.path,
     (newPath) => {
@@ -48,17 +76,14 @@ watch(
     { immediate: true }
 )
 
-// 手动处理选中事件，作为 :router="true" 的兜底方案
-// 如果 el-menu 的 router 模式失效，这个函数会强制跳转
+// 手动处理选中事件
 const handleSelect = (key) => {
-  // 避免重复跳转当前页面
   if (route.path !== key) {
     router.push(key)
   }
 }
 
 onMounted(() => {
-  // 初始化时再次确认高亮
   activeIndex.value = route.path
 })
 </script>
@@ -66,7 +91,6 @@ onMounted(() => {
 <style scoped>
 .header {
   background-color: #fff;
-  /* 使用网络图片作为背景纹理 */
   background-image: url('https://www.ihchina.cn/Uploads/Picture/2018/11/02/s5bdbf7f63f5d.jpg');
   background-size: cover;
   border-bottom: 4px solid #A40000;
@@ -108,7 +132,48 @@ onMounted(() => {
   font-size: 20px;
 }
 
-/* 深度选择器修改 Element Plus 样式 */
+/* 用户入口样式 */
+.user-entry {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.user-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 20px;
+  transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #f0f0f0;
+}
+
+.user-info-btn:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(164, 0, 0, 0.1);
+}
+
+.username {
+  font-size: 16px;
+  color: #333;
+}
+
+.login-btn {
+  background-color: #A40000;
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  padding: 8px 20px;
+}
+
+.login-btn:hover {
+  background-color: #800000;
+  color: #fff;
+}
+
 :deep(.custom-menu) {
   border-bottom: none !important;
   background: transparent !important;
